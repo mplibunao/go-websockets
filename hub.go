@@ -13,6 +13,8 @@ type Hub struct {
 	unregister chan *Client
 	// Consolidated list of messages since server start
 	messages map[int]Message
+	// List of online users
+	users []Message
 }
 
 func newHub() *Hub {
@@ -22,6 +24,7 @@ func newHub() *Hub {
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 		messages:   make(map[int]Message),
+		users:      make([]Message, 0),
 	}
 }
 
@@ -42,6 +45,7 @@ func (h *Hub) run() {
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
+				h.users[client.clientDetails.ID] = Message{}
 				close(client.send)
 			}
 		case message := <-h.broadcast:

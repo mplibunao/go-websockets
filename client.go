@@ -8,7 +8,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var messages = Messages{}
+// var messages = Messages{}
+// var users = []Message
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -30,17 +31,12 @@ type Client struct {
 
 func (c *Client) readPump() {
 	defer func() {
-		for i, message := range c.hub.messages {
-			if message.ID == c.clientDetails.ID {
-				if message.Type == "UPDATE_USER" {
-					// message.Type = "DELETE_USER"
-					// fmt.Println("message", message)
-					// SendJSON(c, message)
-					// message = Message{}
-					// messages[i] = messages[len(messages)-1]
-					// messages = messages[:len(messages)-1]
-					delete(c.hub.messages, i)
-				}
+		for i := range c.hub.users {
+			if i == c.clientDetails.ID {
+				delete(c.hub.clients, c)
+				//delete(c.hub.users, c.clientDetails.ID)
+				c.hub.users[c.clientDetails.ID] = Message{}
+				close(c.send)
 			}
 		}
 
@@ -86,20 +82,16 @@ func (c *Client) writePump() {
 		case "ADD_MESSAGE":
 			if c.clientDetails.ID == message.To {
 				c.hub.messages[len(c.hub.messages)+1] = message
-				// c.hub.messages = append(c.hub.messages, message)
 				SendJSON(c, message)
 			}
 		case "MESSAGE_TO_ALL":
 			c.hub.messages[len(c.hub.messages)+1] = message
-			// c.hub.messages = append(c.hub.messages, message)
 			SendJSON(c, message)
 		case "ADD_USER":
-			c.hub.messages[len(c.hub.messages)+1] = message
-			// c.hub.messages = append(c.hub.messages, message)
+			c.hub.users = append(c.hub.users, message)
 			SendJSON(c, message)
 		case "UPDATE_USER":
 			c.hub.messages[len(c.hub.messages)+1] = message
-			// c.hub.messages = append(c.hub.messages, message)
 			SendJSON(c, message)
 		}
 	}
@@ -127,9 +119,15 @@ func (c *Client) sendCachedMessages() {
 		case "UPDATE_USER":
 			fmt.Println("update_user", message)
 			SendJSON(c, message)
-		case "ADD_USER":
-			fmt.Println("add_user", message)
-			SendJSON(c, message)
+		}
+	}
+}
+
+func (c *Client) sendUsers() {
+	for _, user := range c.hub.users {
+		if c.clientDetails.ID != user.ID {
+			fmt.Println("sending user", user)
+			SendJSON(c, user)
 		}
 	}
 }
@@ -160,4 +158,5 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// Broadcast all messages in cache
 	client.sendCachedMessages()
+	client.sendUsers()
 }
