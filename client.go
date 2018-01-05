@@ -51,11 +51,20 @@ func (c *Client) readPump() {
 		err := c.conn.ReadJSON(&message)
 		if err != nil {
 			fmt.Println("error connection with client has been closed:", err)
-			for i, message := range c.hub.messages {
-				if message.ID == c.clientDetails.ID {
-					if message.Type == "ADD_USER" || message.Type == "UPDATE_USER" {
-						delete(c.hub.messages, i)
-					}
+			// for i, message := range c.hub.messages {
+			// 	if message.ID == c.clientDetails.ID {
+			// 		if message.Type == "ADD_USER" || message.Type == "UPDATE_USER" {
+			// 			delete(c.hub.messages, i)
+			// 		}
+			// 	}
+			// }
+
+			for i := range c.hub.users {
+				if i == c.clientDetails.ID {
+					delete(c.hub.clients, c)
+					//delete(c.hub.users, c.clientDetails.ID)
+					c.hub.users[c.clientDetails.ID] = Message{}
+					//close(c.send)
 				}
 			}
 
