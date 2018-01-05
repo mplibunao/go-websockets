@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Hub struct {
 	// Map of Registered Clients
 	clients map[*Client]bool
@@ -31,21 +33,7 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			//client.send <- client.clientDetails
-			for c := range h.clients {
-				select {
-				case c.send <- client.clientDetails:
-				default:
-					close(c.send)
-					delete(h.clients, client)
-				}
-			}
-		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
-			}
-		case client := <-h.auth:
+			// client.send <- client.clientDetails
 			// for c := range h.clients {
 			// 	select {
 			// 	case c.send <- client.clientDetails:
@@ -54,8 +42,28 @@ func (h *Hub) run() {
 			// 		delete(h.clients, client)
 			// 	}
 			// }
+		case client := <-h.unregister:
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+				close(client.send)
+			}
+		case client := <-h.auth:
 			client.send <- client.clientDetails
+			// c.send <- client.clientDetails
+			// for c := range h.clients {
+			// 	if h.clients[client] {
+			// 		c.send <- client.clientDetails
+			// 	}
+			// 	// select {
+			// 	// case c.send <- client.clientDetails:
+			// 	// default:
+			// 	// 	close(c.send)
+			// 	// 	delete(h.clients, client)
+			// 	// }
+			// }
+			// client.send <- client.clientDetails
 		case message := <-h.broadcast:
+			fmt.Println("message broadcast", message)
 			for client := range h.clients {
 				select {
 				case client.send <- message:

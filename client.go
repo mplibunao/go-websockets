@@ -32,7 +32,7 @@ func (c *Client) readPump() {
 	defer func() {
 		for i, message := range c.hub.messages {
 			if message.ID == c.clientDetails.ID {
-				if message.Type == "ADD_USER" || message.Type == "UPDATE_USER" {
+				if message.Type == "UPDATE_USER" {
 					// message.Type = "DELETE_USER"
 					// fmt.Println("message", message)
 					// SendJSON(c, message)
@@ -71,17 +71,18 @@ func (c *Client) readPump() {
 
 		// Attach ID to message to identify to whom it came from
 		message.ID = c.clientDetails.ID
+		c.hub.broadcast <- message
 
-		switch message.Type {
-		case "UPDATE_USER":
-			c.clientDetails.Username = message.Username
-			c.clientDetails.Type = message.Type
-			c.clientDetails.Email = message.Email
-			c.clientDetails.Time = message.Time
-			c.hub.auth <- c
-		default:
-			c.hub.broadcast <- message
-		}
+		// switch message.Type {
+		// case "UPDATE_USER":
+		// 	c.clientDetails.Username = message.Username
+		// 	c.clientDetails.Type = message.Type
+		// 	c.clientDetails.Email = message.Email
+		// 	c.clientDetails.Time = message.Time
+		// 	c.hub.auth <- c
+		// default:
+		// 	c.hub.broadcast <- message
+		// }
 	}
 }
 
