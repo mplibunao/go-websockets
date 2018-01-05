@@ -72,17 +72,6 @@ func (c *Client) readPump() {
 		// Attach ID to message to identify to whom it came from
 		message.ID = c.clientDetails.ID
 		c.hub.broadcast <- message
-
-		// switch message.Type {
-		// case "UPDATE_USER":
-		// 	c.clientDetails.Username = message.Username
-		// 	c.clientDetails.Type = message.Type
-		// 	c.clientDetails.Email = message.Email
-		// 	c.clientDetails.Time = message.Time
-		// 	c.hub.auth <- c
-		// default:
-		// 	c.hub.broadcast <- message
-		// }
 	}
 }
 

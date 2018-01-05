@@ -11,8 +11,6 @@ type Hub struct {
 	register chan *Client
 	// Channel for clients disconnecting
 	unregister chan *Client
-	// Channel for clients logging in/out
-	auth chan *Client
 	// Consolidated list of messages since server start
 	messages map[int]Message
 }
@@ -23,7 +21,6 @@ func newHub() *Hub {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
-		auth:       make(chan *Client),
 		messages:   make(map[int]Message),
 	}
 }
@@ -47,21 +44,6 @@ func (h *Hub) run() {
 				delete(h.clients, client)
 				close(client.send)
 			}
-		case client := <-h.auth:
-			client.send <- client.clientDetails
-			// c.send <- client.clientDetails
-			// for c := range h.clients {
-			// 	if h.clients[client] {
-			// 		c.send <- client.clientDetails
-			// 	}
-			// 	// select {
-			// 	// case c.send <- client.clientDetails:
-			// 	// default:
-			// 	// 	close(c.send)
-			// 	// 	delete(h.clients, client)
-			// 	// }
-			// }
-			// client.send <- client.clientDetails
 		case message := <-h.broadcast:
 			fmt.Println("message broadcast", message)
 			for client := range h.clients {
